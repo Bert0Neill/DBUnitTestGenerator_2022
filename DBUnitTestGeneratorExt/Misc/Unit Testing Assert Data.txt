@@ -1,0 +1,43 @@
+P2
+--
+
+Class Setup Script:
+C:\Users\aneill\Downloads\Auto DB Demo SQL Scripts\P2 Daily Initialise Script Slim.sql (430 claims)
+
+Stored Procedures:
+------------------
+CapPlanning-By_User
+	Param - N\A
+	Result  613 records
+	
+RetrieveClaimsByProcessor
+	Param - 67
+	Result  10 records	
+	
+StatisticsByProcessor
+	Param - N|A
+	Result  12 records		
+	
+Table Function:
+---------------
+udfFilterClaimsByregion
+	Param - 22
+	Result 445 records	
+	
+Scalar Function:
+----------------
+IsClaimLineActive
+	Param - 11473138 (Claim Number)
+		  - 2017-05-06 (ISR Date)
+		  - 4 (line)
+	Result 0 (false)		
+
+Computed Fields:
+----------------
+Table Name - Daily
+Filter results set by Claim_Number (22000011904010099)
+
+Test the computed fields 
+Computed_Subscbr_Num = 0011904
+Computed_Claim= 099
+Computed_NewdayOrRework = Newday

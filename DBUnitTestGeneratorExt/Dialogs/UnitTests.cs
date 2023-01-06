@@ -1,0 +1,995 @@
+﻿using DBUnitTestGeneratorExt.Models;
+using DBUnitTestGeneratorExt.Resources;
+using log4net;
+using ScintillaNET;
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
+using System.Xml;
+using System.Xml.Serialization;
+using static System.Windows.Forms.CheckedListBox;
+
+namespace DBUnitTestGeneratorExt.EditorUI
+{
+    public partial class UnitTests : Form
+    {
+        #region Private Variables
+        protected ILog log = LogManager.GetLogger(typeof(UnitTests));
+        private DatabaseObjects backForm;
+        private IProjectProperties projectProperties;
+
+        private StringBuilder completedUnitTestCode = null;
+        private StringBuilder testsStoredProcedures = new StringBuilder();
+        private StringBuilder testsFunctions = new StringBuilder();
+        private StringBuilder testsViews = new StringBuilder();
+        private StringBuilder testsComputedFields = new StringBuilder();
+
+        private string privateVariables = string.Empty;
+        private string unitTestSetupTearDownFnxs = string.Empty;
+        private string cleanUpFnx = string.Empty;
+        private string classUtilityMethods = string.Empty;
+
+        private ScintillaNET.Scintilla TextArea;
+        #endregion
+
+        #region Constructors
+
+        public UnitTests()
+        {
+            try
+            {
+                InitializeComponent();
+                log.Info("UnitTests");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+
+        public UnitTests(DatabaseObjects backForm, IProjectProperties projectProperties) : this()
+        {
+            try
+            {
+                this.backForm = backForm;
+                this.backForm.Hide();
+                this.projectProperties = projectProperties;
+
+                log.Info("UnitTests : this");
+
+                this.InitialiseFormatEditor();
+
+                this.GenerateUnitTestPrivateVariables();
+
+                this.GenerateUnitTestInitialiseTearDown();
+
+                this.GenerateUnitTestMethods();
+
+                this.GenerateUnitTestUtilityMethods();
+
+                this.BuildUnitTestPage();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+
+        #endregion
+
+        #region Control Events
+
+        private void btnTestsClipboard_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Cursor.Current = Cursors.WaitCursor;
+
+                Clipboard.SetText(TextArea.Text);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
+            }
+        }
+
+        private void btnTestsBack_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                this.Hide();
+                this.backForm.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+
+        private void btnTestsClose_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            try
+            {
+
+                System.Xml.Serialization.XmlSerializer writer = new System.Xml.Serialization.XmlSerializer(this.projectProperties.GetType());
+
+                System.Data.Common.DbConnectionStringBuilder builder = new System.Data.Common.DbConnectionStringBuilder();
+                builder.ConnectionString = this.projectProperties.DBConnectionString;
+                string server = builder["Data Source"] as string;
+                string database = builder["Initial Catalog"] as string;
+
+                using (var fbd = new FolderBrowserDialog())
+                {
+                    DialogResult result = fbd.ShowDialog();
+                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                    {
+                        var path = fbd.SelectedPath + @"/AutoGenerateDBTests_" + server + "_" + database + ".dbut";
+                        System.IO.FileStream file = System.IO.File.Create(path);
+                        writer.Serialize(file, this.projectProperties);
+                        file.Close();
+                    }
+                }
+
+                //// ToDo: hardcoding path for quick testing
+                //var path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"/AutoGenerateDBTests_" + server + "_" + database + ".dbut";
+                //System.IO.FileStream file = System.IO.File.Create(path);
+                //writer.Serialize(file, this.projectProperties);
+                //file.Close();
+
+                MessageBox.Show("The auto-generated database unit tests have been saved successfully", "Saved Successfully", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+
+        #endregion
+
+        #region
+        private void UnitTests_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                this.AcceptButton = this.btnTestsClipboard; // on Enter key, copy to clipboard
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+        #endregion
+
+        #region Editor Fnx's
+
+        /// <summary>
+        /// the background color of the text area
+        /// </summary>
+        private const int BACK_COLOR = 0x2A211C;
+
+        /// <summary>
+        /// default text color of the text area
+        /// </summary>
+        private const int FORE_COLOR = 0xB7B7B7;
+
+        /// <summary>
+        /// change this to whatever margin you want the line numbers to show in
+        /// </summary>
+        private const int NUMBER_MARGIN = 1;
+
+        /// <summary>
+        /// change this to whatever margin you want the bookmarks/breakpoints to show in
+        /// </summary>
+        private const int BOOKMARK_MARGIN = 2;
+        private const int BOOKMARK_MARKER = 2;
+
+        /// <summary>
+        /// change this to whatever margin you want the code folding tree (+/-) to show in
+        /// </summary>
+        private const int FOLDING_MARGIN = 3;
+
+        /// <summary>
+        /// set this true to show circular buttons for code folding (the [+] and [-] buttons on the margin)
+        /// </summary>
+        private const bool CODEFOLDING_CIRCULAR = true;
+
+        private void InitialiseFormatEditor()
+        {
+            try
+            {
+                // CREATE CONTROL
+                TextArea = new ScintillaNET.Scintilla();
+                TextPanel.Controls.Add(TextArea);
+
+                // BASIC CONFIG
+                TextArea.Dock = System.Windows.Forms.DockStyle.Fill;
+
+                // INITIAL VIEW CONFIG
+                TextArea.WrapMode = WrapMode.None;
+                TextArea.IndentationGuides = IndentView.LookBoth;
+
+                // STYLING
+                InitColors();
+                InitSyntaxColoring();
+
+                // NUMBER MARGIN
+                InitNumberMargin();
+
+                // BOOKMARK MARGIN
+                InitBookmarkMargin();
+
+                // CODE FOLDING MARGIN
+                InitCodeFolding();
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+
+        private void TextArea_MarginClick(object sender, MarginClickEventArgs e)
+        {
+            if (e.Margin == BOOKMARK_MARGIN)
+            {
+                // Do we have a marker for this line?
+                const uint mask = (1 << BOOKMARK_MARKER);
+                var line = TextArea.Lines[TextArea.LineFromPosition(e.Position)];
+                if ((line.MarkerGet() & mask) > 0)
+                {
+                    // Remove existing bookmark
+                    line.MarkerDelete(BOOKMARK_MARKER);
+                }
+                else
+                {
+                    // Add bookmark
+                    line.MarkerAdd(BOOKMARK_MARKER);
+                }
+            }
+        }
+
+        private void InitCodeFolding()
+        {
+
+            TextArea.SetFoldMarginColor(true, IntToColor(BACK_COLOR));
+            TextArea.SetFoldMarginHighlightColor(true, IntToColor(BACK_COLOR));
+
+            // Enable code folding
+            TextArea.SetProperty("fold", "1");
+            TextArea.SetProperty("fold.compact", "1");
+
+            // Configure a margin to display folding symbols
+            TextArea.Margins[FOLDING_MARGIN].Type = MarginType.Symbol;
+            TextArea.Margins[FOLDING_MARGIN].Mask = Marker.MaskFolders;
+            TextArea.Margins[FOLDING_MARGIN].Sensitive = true;
+            TextArea.Margins[FOLDING_MARGIN].Width = 20;
+
+            // Set colors for all folding markers
+            for (int i = 25; i <= 31; i++)
+            {
+                TextArea.Markers[i].SetForeColor(IntToColor(BACK_COLOR)); // styles for [+] and [-]
+                TextArea.Markers[i].SetBackColor(IntToColor(FORE_COLOR)); // styles for [+] and [-]
+            }
+
+            // Configure folding markers with respective symbols
+            TextArea.Markers[Marker.Folder].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CirclePlus : MarkerSymbol.BoxPlus;
+            TextArea.Markers[Marker.FolderOpen].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CircleMinus : MarkerSymbol.BoxMinus;
+            TextArea.Markers[Marker.FolderEnd].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CirclePlusConnected : MarkerSymbol.BoxPlusConnected;
+            TextArea.Markers[Marker.FolderMidTail].Symbol = MarkerSymbol.TCorner;
+            TextArea.Markers[Marker.FolderOpenMid].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CircleMinusConnected : MarkerSymbol.BoxMinusConnected;
+            TextArea.Markers[Marker.FolderSub].Symbol = MarkerSymbol.VLine;
+            TextArea.Markers[Marker.FolderTail].Symbol = MarkerSymbol.LCorner;
+
+            // Enable automatic folding
+            TextArea.AutomaticFold = (AutomaticFold.Show | AutomaticFold.Click | AutomaticFold.Change);
+
+        }
+
+        private void InitBookmarkMargin()
+        {
+
+            //TextArea.SetFoldMarginColor(true, IntToColor(BACK_COLOR));
+
+            var margin = TextArea.Margins[BOOKMARK_MARGIN];
+            margin.Width = 20;
+            margin.Sensitive = true;
+            margin.Type = MarginType.Symbol;
+            margin.Mask = (1 << BOOKMARK_MARKER);
+            //margin.Cursor = MarginCursor.Arrow;
+
+            var marker = TextArea.Markers[BOOKMARK_MARKER];
+            marker.Symbol = MarkerSymbol.Circle;
+            marker.SetBackColor(IntToColor(0xFF003B));
+            marker.SetForeColor(IntToColor(0x000000));
+            marker.SetAlpha(100);
+
+        }
+
+        private void InitNumberMargin()
+        {
+
+            TextArea.Styles[Style.LineNumber].BackColor = IntToColor(BACK_COLOR);
+            TextArea.Styles[Style.LineNumber].ForeColor = IntToColor(FORE_COLOR);
+            TextArea.Styles[Style.IndentGuide].ForeColor = IntToColor(FORE_COLOR);
+            TextArea.Styles[Style.IndentGuide].BackColor = IntToColor(BACK_COLOR);
+
+            var nums = TextArea.Margins[NUMBER_MARGIN];
+            nums.Width = 30;
+            nums.Type = MarginType.Number;
+            nums.Sensitive = true;
+            nums.Mask = 0;
+
+            TextArea.MarginClick += TextArea_MarginClick;
+        }
+
+        private void InitSyntaxColoring()
+        {
+
+            // Configure the default style
+            TextArea.StyleResetDefault();
+            TextArea.Styles[Style.Default].Font = "Consolas";
+            TextArea.Styles[Style.Default].Size = 10;
+            TextArea.Styles[Style.Default].BackColor = IntToColor(0x212121);
+            TextArea.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
+            TextArea.StyleClearAll();
+
+            // Configure the CPP (C#) lexer styles
+            TextArea.Styles[Style.Cpp.Identifier].ForeColor = IntToColor(0xD0DAE2);
+            TextArea.Styles[Style.Cpp.Comment].ForeColor = IntToColor(0xBD758B);
+            TextArea.Styles[Style.Cpp.CommentLine].ForeColor = IntToColor(0x40BF57);
+            TextArea.Styles[Style.Cpp.CommentDoc].ForeColor = IntToColor(0x2FAE35);
+            TextArea.Styles[Style.Cpp.Number].ForeColor = IntToColor(0xFFFF00);
+            TextArea.Styles[Style.Cpp.String].ForeColor = IntToColor(0xFFFF00);
+            TextArea.Styles[Style.Cpp.Character].ForeColor = IntToColor(0xE95454);
+            TextArea.Styles[Style.Cpp.Preprocessor].ForeColor = IntToColor(0x8AAFEE);
+            TextArea.Styles[Style.Cpp.Operator].ForeColor = IntToColor(0xE0E0E0);
+            TextArea.Styles[Style.Cpp.Regex].ForeColor = IntToColor(0xff00ff);
+            TextArea.Styles[Style.Cpp.CommentLineDoc].ForeColor = IntToColor(0x77A7DB);
+            TextArea.Styles[Style.Cpp.Word].ForeColor = IntToColor(0x48A8EE);
+            TextArea.Styles[Style.Cpp.Word2].ForeColor = IntToColor(0xF98906);
+            TextArea.Styles[Style.Cpp.CommentDocKeyword].ForeColor = IntToColor(0xB3D991);
+            TextArea.Styles[Style.Cpp.CommentDocKeywordError].ForeColor = IntToColor(0xFF0000);
+            TextArea.Styles[Style.Cpp.GlobalClass].ForeColor = IntToColor(0x48A8EE);
+
+            TextArea.Lexer = Lexer.Cpp;
+
+            TextArea.SetKeywords(0, "class extends implements import interface new case do while else if for in switch throw get set function var try catch finally while with default break continue delete return each const namespace package include use is as instanceof typeof author copy default deprecated eventType example exampleText exception haxe inheritDoc internal link mtasc mxmlc param private return see serial serialData serialField since throws usage version langversion playerversion productversion dynamic private public partial static intrinsic internal native override protected AS3 final super this arguments null Infinity NaN undefined true false abstract as base bool break by byte case catch char checked class const continue decimal default delegate do double descending explicit event extern else enum false finally fixed float for foreach from goto group if implicit in int interface internal into is lock long new null namespace object operator out override orderby params private protected public readonly ref return switch struct sbyte sealed short sizeof stackalloc static string select this throw true try typeof uint ulong unchecked unsafe ushort using var virtual volatile void while where yield");
+            TextArea.SetKeywords(1, "void Null ArgumentError arguments Array Boolean Class Date DefinitionError Error EvalError Function int Math Namespace Number Object RangeError ReferenceError RegExp SecurityError String SyntaxError TypeError uint XML XMLList Boolean Byte Char DateTime Decimal Double Int16 Int32 Int64 IntPtr SByte Single UInt16 UInt32 UInt64 UIntPtr Void Path File System Windows Forms ScintillaNET");
+
+        }
+
+        private void InitColors()
+        {
+            TextArea.SetSelectionBackColor(true, IntToColor(0x114D9C));
+        }
+
+        #endregion
+
+        #region Editor Utils
+        public static Color IntToColor(int rgb)
+        {
+            return Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
+        }
+
+        public void InvokeIfNeeded(Action action)
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(action);
+            }
+            else
+            {
+                action.Invoke();
+            }
+        }
+
+        #endregion
+
+        #region Helper Fnxs
+        private void GenerateUnitTestPrivateVariables()
+        {
+            try
+            {
+                this.privateVariables = String.Format(UnitTestFunctions.PrivateVariables, this.projectProperties.DBConnectionString);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+
+        private void GenerateUnitTestMethods()
+        {
+            try
+            {
+                // Stored Procedures
+                foreach (string sproc in this.projectProperties.SelectedProcedures)
+                {
+                    bool isOutPutParameters = false;
+                    string sqlProcedure = string.Empty;
+                    IGeneratedParameters generatedParameters = null;
+                    string sprocOnly = this.RetrieveObjectName(sproc);
+
+                    // determine if any InOut or Out parameters, otherwise create parameters as normal
+                    using (SqlConnection conn = new SqlConnection(this.projectProperties.DBConnectionString))
+                    {
+                        if (conn.State != ConnectionState.Open) conn.Open(); // open connection to DB
+                                                                             //sproc.Split('.')[1].Replace("[","").Replace("]","")
+
+                        using (SqlCommand cmd = new SqlCommand(String.Format(SQLStatements.RetrieveParameterInformation, sprocOnly), conn))
+                        {
+                            DataTable dtParameters = new DataTable();
+                            SqlDataAdapter da = new SqlDataAdapter(cmd);
+                            da.Fill(dtParameters);
+                            da.Dispose();
+
+                            isOutPutParameters = (dtParameters.Select("parameter_mode = 'INOUT' OR parameter_mode = 'OUT'").Length > 0);
+                        }
+                    }
+
+                    if (!isOutPutParameters)
+                    {
+                        this.BuildSQLProcedureParameter(sproc, out generatedParameters); // get parameters (if any)
+                        sqlProcedure = String.Format(UnitTestFunctions.AssertStoredProcedure, sprocOnly, sproc, generatedParameters.Parameters.ToString());
+                    }
+                    else
+                    {
+                        string sqlSnippet = this.BuildSQLProcedureParameterWithOutputs(sproc, out generatedParameters);
+                        sqlProcedure = String.Format(UnitTestFunctions.AssertStoredProcedureMultipleReturns, sprocOnly, sqlSnippet);
+                    }
+
+                    testsStoredProcedures.Append(sqlProcedure);
+                }
+
+                // Scalar & Inline functions
+                foreach (string fnx in this.projectProperties.SelectedFnxs)
+                {
+                    string sqlFnx = string.Empty;
+                    IGeneratedParameters generatedParameters = null;
+
+                    // determine if Scalar ot Inline
+                    SqlConnection conn = new SqlConnection(this.projectProperties.DBConnectionString);
+                    if (conn.State != ConnectionState.Open) conn.Open(); // open connection to DB
+
+                    string fnxTmp = this.RetrieveObjectName(fnx);
+                    SqlCommand cmd = new SqlCommand(String.Format(SQLStatements.RetrieveFunctionScalorOrTable, fnxTmp), conn);
+                    string sqlFnxType = cmd.ExecuteScalar().ToString();
+
+                    BuildSQLFnxParameter(fnxTmp, out generatedParameters, sqlFnxType); // get parameters (if any)
+
+                    if (sqlFnxType == "FN") // Scalar Function
+                    {
+                        SqlDbType sqlDbType = (SqlDbType)Enum.Parse(typeof(SqlDbType), generatedParameters.SQLReturnDataType, true);
+                        generatedParameters.CSharpReturnDataType = this.DetermineCSharpDataType(sqlDbType).ToString();
+
+                        object dummyData = this.GenerateParameterDummyValue(sqlDbType, null);
+
+                        sqlFnx = String.Format(UnitTestFunctions.AssertFnxScalarValue, fnxTmp, generatedParameters.FnxSelectStatement, generatedParameters.Parameters.ToString(), generatedParameters.CSharpReturnDataType, dummyData);
+                    }
+                    else if (sqlFnxType == "IF") // Inline (Table) Function
+                    {
+                        sqlFnx = String.Format(UnitTestFunctions.AssertFnxInlineDataSet, fnxTmp, generatedParameters.FnxSelectStatement, generatedParameters.Parameters.ToString());
+                    }
+
+                    testsFunctions.Append(sqlFnx);
+                }
+
+                // Views
+                foreach (string view in this.projectProperties.SelectedViews)
+                {
+                    //string viewTmp = view.Split('.')[1].Replace("[", "").Replace("]", "");
+                    testsViews.Append(String.Format(UnitTestFunctions.AssertView, this.RetrieveObjectName(view)));
+                    testsViews.Append(Environment.NewLine);
+                }
+
+                // Computed Fields
+                if (this.projectProperties.IsUnitTestComputedFields)
+                {
+                    using (SqlConnection conn = new SqlConnection(this.projectProperties.DBConnectionString))
+                    {
+                        if (conn.State != ConnectionState.Open) conn.Open(); // open connection to DB
+
+                        using (SqlDataAdapter daSchema = new SqlDataAdapter(SQLStatements.RetrieveAllComputedFields, conn))
+                        {
+                            DataSet dsDatabaseObjects = new DataSet("ComputedFieldDetails");
+
+                            daSchema.Fill(dsDatabaseObjects, "ComputedFieldDetails");
+
+                            foreach (DataRow computedField in dsDatabaseObjects.Tables["ComputedFieldDetails"].Rows)
+                            {
+                                string test = String.Format(UnitTestFunctions.AsertComputedField, computedField["column_name"], computedField["table_name"]);
+                                testsComputedFields.Append(test);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+
+        private void BuildSQLProcedureParameter(string sqlProcedure, out IGeneratedParameters generatedParameters)
+        {
+            try
+            {
+                generatedParameters = new GeneratedParameters();
+                StringBuilder procedureParameters = new StringBuilder();
+
+                using (SqlConnection conn = new SqlConnection(this.projectProperties.DBConnectionString))
+                {
+                    if (conn.State != ConnectionState.Open) conn.Open(); // open connection to DB
+
+                    using (SqlCommand cmd = new SqlCommand(sqlProcedure, conn))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        SqlCommandBuilder.DeriveParameters(cmd);
+                        foreach (SqlParameter p in cmd.Parameters)
+                        {
+                            if (p.ParameterName != "@RETURN_VALUE")
+                            {
+                                object dummyValue = this.GenerateParameterDummyValue(p.SqlDbType, p.Size);
+                                generatedParameters.Parameters.Append(String.Format(SQLStatements.AddParameter, p.ParameterName, p.SqlDbType, dummyValue));
+                                generatedParameters.Parameters.Append(Environment.NewLine);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+                generatedParameters = new GeneratedParameters(); // empty when an exception
+            }
+        }
+
+        private string BuildSQLProcedureParameterWithOutputs(string sqlProcedure, out IGeneratedParameters generatedParameters)
+        {
+            try
+            {
+                generatedParameters = new GeneratedParameters();
+                StringBuilder procedureParameters = new StringBuilder();
+
+                StringBuilder declareVariables = new StringBuilder();
+                StringBuilder execOutParams = new StringBuilder();
+                StringBuilder execInParams = new StringBuilder();
+                StringBuilder assignedOutVariables = new StringBuilder();
+
+                using (SqlConnection conn = new SqlConnection(this.projectProperties.DBConnectionString))
+                {
+                    if (conn.State != ConnectionState.Open) conn.Open(); // open connection to DB
+
+                    using (SqlCommand cmd = new SqlCommand(sqlProcedure, conn))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        SqlCommandBuilder.DeriveParameters(cmd);
+
+                        foreach (SqlParameter param in cmd.Parameters)
+                        {
+                            if (param.Direction == ParameterDirection.InputOutput)
+                            {
+                                string variableType = param.SqlDbType.ToString() == "varchar" ? param.SqlDbType.ToString() + "(" + param.Size + ");" : param.SqlDbType.ToString();
+
+                                declareVariables.Append(String.Format(SQLStatements.SQLDeclareStatement, param.ParameterName + "_Out", variableType));
+                                declareVariables.Append(Environment.NewLine);
+
+                                execOutParams.Append(param.ParameterName + " = " + param.ParameterName + "_Out OUTPUT, ");
+
+                                assignedOutVariables.Append("SELECT " + param.ParameterName + "_Out AS " + param.ParameterName.Replace("@", "") + ";");
+                                declareVariables.Append(Environment.NewLine);
+                            }
+
+                            if (param.Direction == ParameterDirection.Input)
+                            {
+                                object dummyValue = this.GenerateParameterDummyValue(param.SqlDbType, param.Size).ToString().Replace("\"", "'");
+                                execInParams.Append(dummyValue + ",");
+                            }
+                        }
+
+                        execOutParams.Remove(execOutParams.Length - 2, 2); // remove last NewLine & comma
+                        string sqlSnippet = String.Format(SQLStatements.SQLProcedureWithInputsOutputs,
+                            declareVariables.ToString(),
+                            sqlProcedure,
+                            execInParams.ToString() + execOutParams.ToString(),
+                            assignedOutVariables.ToString());
+
+                        return sqlSnippet;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+                generatedParameters = new GeneratedParameters(); // empty when an exception
+                return string.Empty;
+            }
+        }
+
+        private void BuildSQLFnxParameter(string sqlFnx, out IGeneratedParameters generatedParameters, string sqlFnxType)
+        {
+            try
+            {
+                generatedParameters = new GeneratedParameters();
+                StringBuilder fnxParameters = new StringBuilder();
+                StringBuilder fnxSelectParameters = new StringBuilder();
+                int? sqlTypeSize = null;
+
+                using (SqlConnection conn = new SqlConnection(this.projectProperties.DBConnectionString))
+                {
+                    if (conn.State != ConnectionState.Open) conn.Open(); // open connection to DB
+
+                    // retrieve function parameters (in\out)
+                    using (SqlDataAdapter daSchema = new SqlDataAdapter(String.Format(SQLStatements.RetrieveFunctionParameters, sqlFnx), conn))
+                    {
+                        DataSet dsDatabaseObjects = new DataSet("FunctionDetails");
+
+                        daSchema.Fill(dsDatabaseObjects, "FunctionDetails");
+
+                        foreach (DataRow fnxParameter in dsDatabaseObjects.Tables["FunctionDetails"].Rows)
+                        {
+                            if (fnxParameter["PARAMETER_MODE"].ToString() == "OUT")
+                            {
+                                generatedParameters.SQLReturnDataType = fnxParameter["DATA_TYPE"].ToString();
+                            }
+                            else if (fnxParameter["PARAMETER_MODE"].ToString() == "IN")
+                            {
+                                fnxSelectParameters.Append(fnxParameter["Parameter_Name"].ToString());
+                                fnxSelectParameters.Append(",");
+
+                                SqlDbType sqlDbType = (SqlDbType)Enum.Parse(typeof(SqlDbType), fnxParameter["DATA_TYPE"].ToString(), true);
+                                if (fnxParameter.ItemArray[3].ToString() == string.Empty)
+                                {
+                                    sqlTypeSize = null;
+                                }
+                                else
+                                {
+                                    sqlTypeSize = Convert.ToInt32(fnxParameter["CHARACTER_MAXIMUM_LENGTH"]?.ToString());
+                                }
+
+                                object dummyValue = this.GenerateParameterDummyValue(sqlDbType, sqlTypeSize);
+                                generatedParameters.Parameters.Append(String.Format(SQLStatements.AddParameter, fnxParameter["Parameter_Name"].ToString(), sqlDbType.ToString(), dummyValue));
+                                generatedParameters.Parameters.Append(Environment.NewLine);
+                            }
+                        }
+                    }
+
+                    // build up "Select" clause
+                    if (fnxSelectParameters.Length > 0) fnxSelectParameters.Remove(fnxSelectParameters.Length - 1, 1); // remove last comma
+
+                    if (sqlFnxType == "FN") generatedParameters.FnxSelectStatement = String.Format(SQLStatements.ScalarFnxSelectStatement, sqlFnx, fnxSelectParameters.ToString());
+                    else if (sqlFnxType == "IF") generatedParameters.FnxSelectStatement = String.Format(SQLStatements.InlineFnxSelectStatement, sqlFnx, fnxSelectParameters.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+
+                generatedParameters = new GeneratedParameters(); // empty when an exception
+            }
+        }
+
+        private object GenerateParameterDummyValue(SqlDbType sqlDbType, int? maxSize)
+        {
+            try
+            {
+                object value = Strings.Invalid_Datatype; // default
+
+                switch (sqlDbType)
+                {
+                    case SqlDbType.BigInt:
+                    case SqlDbType.Int:
+                    case SqlDbType.SmallInt:
+                    case SqlDbType.Variant:
+                        value = 10;
+                        break;
+                    case SqlDbType.Decimal:
+                    case SqlDbType.Float:
+                    case SqlDbType.Real:
+                    case SqlDbType.Money:
+                    case SqlDbType.SmallMoney:
+                    case SqlDbType.TinyInt:
+                        value = 10.00;
+                        break;
+                    case SqlDbType.DateTime:
+                    case SqlDbType.SmallDateTime:
+                    case SqlDbType.Date:
+                    case SqlDbType.DateTime2:
+                        value = "\"" + DateTime.Now.ToShortDateString() + "\"";
+                        break;
+                    case SqlDbType.Bit:
+                        value = "false";
+                        break;
+                    
+                    case SqlDbType.Char:
+                    case SqlDbType.NChar:
+                        value = "\"Y\""; // single char
+                        break;
+                    case SqlDbType.Text:
+                    case SqlDbType.VarChar:                    
+                    case SqlDbType.NText:
+                    case SqlDbType.NVarChar:
+                        value = "\"Y\""; // return chars the max length (limit at 10 characters)
+                        //value = string.Join("", Enumerable.Repeat(0, maxSize ?? default(int)).Select(n => (char)new Random().Next(127)));
+
+                        break;
+                    case SqlDbType.UniqueIdentifier:
+                        value = new System.Guid();
+                        break;
+                    case SqlDbType.Time:
+                    case SqlDbType.DateTimeOffset:
+                        value = DateTime.Now.TimeOfDay;
+                        break;
+                    case SqlDbType.Image:
+                    case SqlDbType.Binary:
+                    case SqlDbType.VarBinary:
+                        value = new { One = "\"1\"", Two = "\"2\"", Three = "\"3\"", Four = "\"4\"" };
+                        break;
+                    case SqlDbType.Timestamp:
+                        value = "\"" + DateTime.Now.ToString("yyyyMMddHHmmssffff") + "\"";
+                        break;
+                    case SqlDbType.Xml:
+                        value = "\"<Price=\"100.99\" />\"";
+                        break;
+                }
+
+                return value;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+
+                return string.Empty;
+            }
+        }
+
+        private object DetermineCSharpDataType(SqlDbType sqlDbType)
+        {
+            try
+            {
+                object value = Strings.Invalid_Datatype; // default
+
+                switch (sqlDbType)
+                {
+                    case SqlDbType.BigInt:
+                    case SqlDbType.Int:
+                    case SqlDbType.SmallInt:
+                    case SqlDbType.Variant:
+                        value = "int";
+                        break;
+                    case SqlDbType.Decimal:
+                    case SqlDbType.Float:
+                    case SqlDbType.Real:
+                    case SqlDbType.Money:
+                    case SqlDbType.SmallMoney:
+                    case SqlDbType.TinyInt:
+                        value = "decimal";
+                        break;
+                    case SqlDbType.DateTime:
+                    case SqlDbType.SmallDateTime:
+                    case SqlDbType.Date:
+                    case SqlDbType.DateTime2:
+                        value = "DateTime";
+                        break;
+                    case SqlDbType.Bit:
+                        value = "bool";
+                        break;
+                    case SqlDbType.Text:
+                    case SqlDbType.Char:
+                    case SqlDbType.VarChar:
+                    case SqlDbType.NChar:
+                    case SqlDbType.NText:
+                    case SqlDbType.NVarChar:
+                        value = "string";
+                        break;
+                    case SqlDbType.UniqueIdentifier:
+                        value = "System.Guid()";
+                        break;
+                    case SqlDbType.Time:
+                    case SqlDbType.DateTimeOffset:
+                        value = "TimeSpan";
+                        break;
+                    case SqlDbType.Image:
+                    case SqlDbType.Binary:
+                    case SqlDbType.VarBinary:
+                        value = "Byte[]";
+                        break;
+                    case SqlDbType.Timestamp:
+                        value = "DateTime";
+                        break;
+                    case SqlDbType.Xml:
+                        value = "string";
+                        break;
+                }
+
+                return value;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+
+                return string.Empty;
+            }
+        }
+
+        private void GenerateUnitTestInitialiseTearDown()
+        {
+            try
+            {
+                string sqlProjectSetup = string.Empty;
+                string sqlTestSetup = string.Empty;
+                string sqlProjectTearDown = string.Empty;
+                string sqlTestTearDown = string.Empty;
+
+                // class setup
+                if (this.projectProperties.ProjectSetupScriptSQL != string.Empty)
+                {
+                    sqlProjectSetup = String.Format(SQLStatements.ExecNonQuerySQLString, this.projectProperties.ProjectSetupScriptSQL);
+                }
+
+                // test setup
+                if (this.projectProperties.TestSetupScriptSQL != string.Empty)
+                {
+                    sqlTestSetup = String.Format(SQLStatements.ExecNonQuerySQLString, this.projectProperties.TestSetupScriptSQL);
+                }
+
+                // class tear down
+                if (this.projectProperties.ProjectTearDownScriptSQL != string.Empty)
+                {
+                    sqlProjectTearDown = String.Format(SQLStatements.ExecNonQuerySQLString, this.projectProperties.ProjectTearDownScriptSQL);
+                }
+
+                // teat tear down
+                if (this.projectProperties.TestTearDownScriptSQL != string.Empty)
+                {
+                    sqlTestTearDown = String.Format(SQLStatements.ExecNonQuerySQLString, this.projectProperties.TestTearDownScriptSQL);
+                }
+
+                this.unitTestSetupTearDownFnxs = String.Format(UnitTestFunctions.Initialise_CleanupFnx,
+                    sqlProjectSetup,
+                    sqlTestSetup,
+                    sqlProjectTearDown,
+                    sqlTestTearDown
+                    );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+
+        private void GenerateUnitTestUtilityMethods()
+        {
+            try
+            {
+                this.classUtilityMethods = UnitTestFunctions.ClassUtilityMethods;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+
+        private void BuildUnitTestPage()
+        {
+            try
+            {
+                completedUnitTestCode = new StringBuilder();
+
+                completedUnitTestCode.Append(UnitTestFunctions.UsingAndNamespace);
+                completedUnitTestCode.Append(Environment.NewLine);
+
+                completedUnitTestCode.Append(this.privateVariables);
+                completedUnitTestCode.Append(Environment.NewLine);
+
+                completedUnitTestCode.Append(this.unitTestSetupTearDownFnxs);
+                completedUnitTestCode.Append(Environment.NewLine);
+
+                completedUnitTestCode.Append(this.cleanUpFnx);
+                completedUnitTestCode.Append(Environment.NewLine);
+
+                completedUnitTestCode.Append("#region MSTests - Database Stored Procedures");
+                completedUnitTestCode.Append(Environment.NewLine);
+                completedUnitTestCode.Append(this.testsStoredProcedures.ToString());
+                completedUnitTestCode.Append(Environment.NewLine);
+                completedUnitTestCode.Append("#endregion");
+                completedUnitTestCode.Append(Environment.NewLine);
+
+                completedUnitTestCode.Append("#region MSTests - Database Functions");
+                completedUnitTestCode.Append(Environment.NewLine);
+                completedUnitTestCode.Append(this.testsFunctions.ToString());
+                completedUnitTestCode.Append(Environment.NewLine);
+                completedUnitTestCode.Append("#endregion");
+                completedUnitTestCode.Append(Environment.NewLine);
+
+                completedUnitTestCode.Append("#region MSTests - Database Views");
+                completedUnitTestCode.Append(Environment.NewLine);
+                completedUnitTestCode.Append(this.testsViews.ToString());
+                completedUnitTestCode.Append(Environment.NewLine);
+                completedUnitTestCode.Append("#endregion");
+                completedUnitTestCode.Append(Environment.NewLine);
+
+                completedUnitTestCode.Append("#region MSTests - Database Computed Fields");
+                completedUnitTestCode.Append(Environment.NewLine);
+                completedUnitTestCode.Append(this.testsComputedFields.ToString());
+                completedUnitTestCode.Append(Environment.NewLine);
+                completedUnitTestCode.Append("#endregion");
+                completedUnitTestCode.Append(Environment.NewLine);
+
+                completedUnitTestCode.Append("#region MSTests - Utility methods");
+                completedUnitTestCode.Append(Environment.NewLine);
+                completedUnitTestCode.Append(this.classUtilityMethods);
+                completedUnitTestCode.Append(Environment.NewLine);
+                completedUnitTestCode.Append("#endregion");
+                completedUnitTestCode.Append(Environment.NewLine);
+
+                completedUnitTestCode.Append(UnitTestFunctions.EndingClassBrackets);
+                completedUnitTestCode.Append(Environment.NewLine);
+
+                this.TextArea.Text = completedUnitTestCode.ToString();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+            }
+        }
+
+        private string RetrieveObjectName(string databaseObjectName)
+        {
+            try
+            {
+                return databaseObjectName.Split('.')[1].Replace("[", "").Replace("]", "");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                log.Error(ex);
+                return string.Empty;
+            }
+        }
+        #endregion
+    }
+}

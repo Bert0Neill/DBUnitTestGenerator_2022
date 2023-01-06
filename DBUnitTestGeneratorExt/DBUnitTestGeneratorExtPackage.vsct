@@ -1,0 +1,182 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!--Standard images\Moniker (http://glyphlist.azurewebsites.net/knownmonikers/) -->
+  <Include href="KnownImageIds.vsct" />
+
+  <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
+  <Extern href="stdidcmd.h" />
+
+  <!--This header contains the command ids for the menus provided by the shell. -->
+  <Extern href="vsshlids.h" />
+
+  <!--The Commands section is where commands, menus, and menu groups are defined.
+      This section uses a Guid to identify the package that provides the command defined inside it. -->
+  <Commands package="guidDBUnitTestGeneratorExtPackage">
+
+    <Menus>
+      <Menu guid="guidDBUnitTestGeneratorExtPackageCmdSet" id="TopLevelMenu" priority="0x700" type="Menu">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_MM_TOOLSADDINS" />
+        <Strings>
+          <ButtonText>Test Menu</ButtonText>
+          <CommandName>Database Unit Test Generator</CommandName>
+        </Strings>
+      </Menu>
+    </Menus>
+
+    <Groups>
+      <Group guid="guidDBUnitTestGeneratorExtPackageCmdSet" id="MyMenuGroup" priority="0x0600">
+        <Parent guid="guidDBUnitTestGeneratorExtPackageCmdSet" id="TopLevelMenu" />
+      </Group>
+      <Group guid="guidDBUnitTestGeneratorExtPackageCmdSet1" id="MyMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      </Group>
+    </Groups>
+
+    <!--Buttons section. -->    
+    <Buttons>
+      <Button guid="guidDBUnitTestGeneratorExtPackageCmdSet" id="cmdPromptDatabaseId" priority="0x0100" type="Button">
+        <Parent guid="guidDBUnitTestGeneratorExtPackageCmdSet" id="MyMenuGroup" />        
+        <Icon guid="ImageCatalogGuid" id="EditDatabase" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <Strings>
+          <ButtonText>Configuration Panel</ButtonText>          
+          <CommandName>CommandId</CommandName>
+          <ToolTipText>Add or remove database objects to unit test</ToolTipText>
+        </Strings>
+      </Button>
+       <Button guid="guidDBUnitTestGeneratorExtPackageCmdSet" id="cmdidToolWindow1Command" priority="0x0100" type="Button">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
+        <Icon guid="guidImages1" id="bmpPic1" />
+        <Strings>
+          <ButtonText>ToolWindow1</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidDBUnitTestGeneratorExtPackageCmdSet" id="cmdidToolWindow1Command1" priority="0x0100" type="Button">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
+        <Icon guid="guidImages2" id="bmpPic1" />
+        <Strings>
+          <ButtonText>ToolWindow1</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidDBUnitTestGeneratorExtPackageCmdSet" id="cmdidToolWindow1Command2" priority="0x0100" type="Button">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
+        <Icon guid="guidImages3" id="bmpPic1" />
+        <Strings>
+          <ButtonText>ToolWindow1</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidDBUnitTestGeneratorExtPackageCmdSet1" id="cmdidcmdDB_Details" priority="0x0100" type="Button">
+        <Parent guid="guidDBUnitTestGeneratorExtPackageCmdSet1" id="MyMenuGroup" />
+        <Icon guid="guidImages4" id="bmpPic1" />
+        <Strings>
+          <ButtonText>Invoke cmdDB_Details</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidDBUnitTestGeneratorExtPackageCmdSet1" id="cmdidcmdDB_Objects" priority="0x0100" type="Button">
+        <Parent guid="guidDBUnitTestGeneratorExtPackageCmdSet1" id="MyMenuGroup" />
+        <Icon guid="guidImages5" id="bmpPic1" />
+        <Strings>
+          <ButtonText>Invoke cmdDB_Objects</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidDBUnitTestGeneratorExtPackageCmdSet1" id="cmdidcmdDB_UnitTests" priority="0x0100" type="Button">
+        <Parent guid="guidDBUnitTestGeneratorExtPackageCmdSet1" id="MyMenuGroup" />
+        <Icon guid="guidImages6" id="bmpPic1" />
+        <Strings>
+          <ButtonText>Invoke cmdDB_UnitTests</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+
+    <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
+    <Bitmaps>
+      <Bitmap guid="guidImages" href="Resources\cmdPromptDatabase.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />     
+    </Bitmaps>
+  </Commands>
+
+  <Symbols>
+    <!-- This is the package guid. -->
+    <GuidSymbol name="guidDBUnitTestGeneratorExtPackage" value="{5caeacb5-d46b-49c8-9c68-6317999fb210}" />
+
+    <!-- This is the guid used to group the menu commands together -->
+    <GuidSymbol name="guidDBUnitTestGeneratorExtPackageCmdSet" value="{13fa8374-83cc-484a-9e44-df8a684f6bfb}">
+      <IDSymbol name="MyMenuGroup" value="0x1020" />
+      <IDSymbol name="cmdPromptDatabaseId" value="0x0100" />
+      <IDSymbol name="TopLevelMenu" value="0x1021" />
+      <IDSymbol value="4130" name="cmdidToolWindow1Command" />
+      <IDSymbol value="4131" name="cmdidToolWindow1Command1" />
+      <IDSymbol value="4132" name="cmdidToolWindow1Command2" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidImages" value="{605d7002-99f3-4395-9bdb-cfcbfe773682}">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{6fb5141d-beab-4add-a9d6-64904b3a2f41}" name="guidImages1">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{ec628cd6-d95e-48c6-bd21-2d78f9de9fe4}" name="guidImages2">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{d0e195cb-ca9d-4c55-a659-14b49b352e21}" name="guidImages3">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{f672359b-15f6-4960-8686-a1b692faf63f}" name="guidDBUnitTestGeneratorExtPackageCmdSet1">
+      <IDSymbol value="4128" name="MyMenuGroup" />
+      <IDSymbol value="256" name="cmdidcmdDB_Details" />
+      <IDSymbol value="4129" name="cmdidcmdDB_Objects" />
+      <IDSymbol value="4130" name="cmdidcmdDB_UnitTests" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{8de3e9a1-e540-4288-9adc-eff2dc63b72d}" name="guidImages4">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{a4331f3c-cd95-4834-bf62-b8ed47bfb183}" name="guidImages5">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{c9f6edf5-b2f6-41f3-8188-2f299dd39a20}" name="guidImages6">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>

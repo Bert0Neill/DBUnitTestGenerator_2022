@@ -1,0 +1,29 @@
+﻿/*Stored Procedures & Functions*/
+SELECT 
+    rtn.ROUTINE_NAME COLLATE Latin1_General_CI_AS_KS_WS AS ObjectName,     
+    rtn.ROUTINE_SCHEMA COLLATE Latin1_General_CI_AS_KS_WS AS ObjectSchema,
+	rtn.ROUTINE_TYPE COLLATE Latin1_General_CI_AS_KS_WS AS ObjectType 
+FROM
+    INFORMATION_SCHEMA.ROUTINES rtn
+WHERE
+    rtn.ROUTINE_TYPE = 'PROCEDURE' OR rtn.ROUTINE_TYPE = 'FUNCTION'
+
+UNION 
+
+/*Views*/
+SELECT 
+	vws.name COLLATE Latin1_General_CI_AS_KS_WS AS ObjectName,
+	OBJECT_SCHEMA_NAME(vws.object_id) COLLATE Latin1_General_CI_AS_KS_WS AS ObjectSchema, 
+	vws.type_desc COLLATE Latin1_General_CI_AS_KS_WS AS ObjectType	
+FROM sys.views as vws
+WHERE type_desc = 'VIEW'
+
+UNION
+
+/*Triggers*/
+SELECT 
+	tgr.name COLLATE Latin1_General_CI_AS_KS_WS AS ObjectName,  
+	NULL AS ObjectSchema, 
+	'TRIGGER' AS ObjectType	
+FROM SYS.TRIGGERS tgr
+WHERE tgr.TYPE_DESC = 'SQL_TRIGGER'

@@ -1,0 +1,54 @@
+﻿Get the parameters (inc. datatype) of a procedure - use to create SQL Parameter
+select * from information_schema.parameters where specific_name='RetrieveClaimsByFilters'
+
+private void button1_Click(object sender, EventArgs e) {
+  using (SqlConnection con = new SqlConnection(dc.Con)) {
+    using (SqlCommand cmd = new SqlCommand("sp_Add_contact", con)) {
+      cmd.CommandType = CommandType.StoredProcedure;
+
+      cmd.Parameters.Add("@FirstName", SqlDbType.VarChar).Value = txtFirstName.Text;
+      cmd.Parameters.Add("@LastName", SqlDbType.VarChar).Value = txtLastName.Text;
+
+      con.Open();
+      cmd.ExecuteNonQuery();
+    }
+  }
+}
+
+https://blogs.lessthandot.com/index.php/datamgmt/datadesign/getting-the-list-of-parameters/
+private void ListParms()
+{
+    SqlConnection conn = new SqlConnection("my sql connection string");
+    SqlCommand cmd = new SqlCommand("proc name", conn);
+    cmd.CommandType = CommandType.StoredProcedure;
+    conn.Open();
+    SqlCommandBuilder.DeriveParameters(cmd);
+    foreach (SqlParameter p in cmd.Parameters)
+    {
+       Console.WriteLine(p.ParameterName);
+    }
+}
+
+For Fnx's the out value will be in this list too
+select * from information_schema.parameters where specific_name='fn_RetrieveHistoryClaimStatus'
+------------------------------------------------------------------------------------------
+Get the type of function:
+
+SELECT *   FROM sys.sql_modules m INNER JOIN sys.objects o ON m.object_id=o.object_id WHERE type_desc like '%function%'
+
+FN : Scalar function
+IF : Inline table-valued function
+TF : Table-valued-function
+FS : Assembly (CLR) scalar-function
+FT : Assembly (CLR) table-valued function
+-------------------------------------------------------------------------
+1) Retrieve parameters
+2) Build up parameter and add to SQLCommand
+3) Execute Command - Fill DataSet using DataAdapter 
+4) Alerts
+    If Fnx (FN with Out Parameter) Alert against single value
+    If Fnx (FN without a Parameter) Alert executed (don't test values)
+    If Fnx (IF, TF) Alert against Row\Colimn count, alert agsinst value in row[0][1]
+    If (Procedure) Alert against Row\Colimn count, alert agsinst value in row[0][1]
+    If (View) Alert against Row\Colimn count, alert agsinst value in row[0][1]
+

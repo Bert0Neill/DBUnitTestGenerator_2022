@@ -1,0 +1,489 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AsertComputedField" xml:space="preserve">
+    <value>
+[TestMethod]
+public void ComputedField_{0}_{1}()
+{{
+	try
+	{{
+		using (SqlConnection con = new SqlConnection(connString))
+		{{
+			using (SqlCommand cmd = new SqlCommand("SELECT TOP 10 {0} FROM dbo.[{1}]", con))
+			{{
+				cmd.CommandType = CommandType.Text;
+
+				SqlDataAdapter da = new SqlDataAdapter();
+				da.SelectCommand = cmd;
+
+				DataSet ds = new DataSet();
+				da.Fill(ds, "Fields");
+
+				DataColumnCollection columns = ds.Tables["Fields"].Columns;
+
+				// generic asserts
+				Assert.IsTrue(ds.Tables.Count == 1);
+				Assert.IsTrue(ds.Tables[0].Rows.Count &gt; 1);
+
+				// specific computed fields asserts (asseret for each field in table)
+				Assert.IsTrue(columns.Contains("{0}"));
+
+				// include in script for developer to configue into test
+				//Assert.AreEqual(ds.Tables["ComputedFields"].Rows[0]["{0}"], "A value" );
+			}}
+		}}
+	}}
+	catch (SqlException ex)
+	{{
+		Console.WriteLine(BuildExeptionSQL(ex));
+	}}
+	catch (Exception ex)
+	{{
+		Console.WriteLine(ex.Message);
+	}}
+}}
+</value>
+  </data>
+  <data name="AssertFnxInlineDataSet" xml:space="preserve">
+    <value>
+[TestMethod]
+public void TableFunction{0}()
+{{
+	try
+	{{
+		using (SqlConnection con = new SqlConnection(connString))
+		{{
+			if (con != null &amp;&amp; con.State == ConnectionState.Closed) con.Open();
+
+			using (SqlCommand cmd = new SqlCommand("{1}", con))
+			{{
+				cmd.CommandType = CommandType.Text;
+
+				{2}
+
+				SqlDataAdapter da = new SqlDataAdapter();
+				da.SelectCommand = cmd;
+
+				DataSet ds = new DataSet();
+				da.Fill(ds, "data");
+
+				Assert.IsTrue(ds.Tables.Count == 1);
+				Assert.IsTrue(ds.Tables[0].Rows.Count &gt; 1);
+			}}
+		}}
+	}}
+	catch (SqlException ex)
+	{{
+		Console.WriteLine(BuildExeptionSQL(ex));
+	}}
+	catch (Exception ex)
+	{{
+		Console.WriteLine(ex.Message);
+	}}
+}}
+</value>
+  </data>
+  <data name="AssertFnxScalarValue" xml:space="preserve">
+    <value>
+[TestMethod]
+public void ScalarFunction{0}()
+{{
+	try
+	{{
+		using (SqlConnection con = new SqlConnection(connString))
+		{{
+			if (con != null &amp;&amp; con.State == ConnectionState.Closed) con.Open();
+
+			using (SqlCommand cmd = new SqlCommand("{1}", con))
+			{{
+				cmd.CommandType = CommandType.Text;
+
+				// parameters
+				{2}
+
+				{3} result = ({3})cmd.ExecuteScalar(); // build up result type\cast based on values in DB (select * from information_schema.parameters where specific_name='fn_IsClaimLineActive')
+
+				Assert.IsTrue(result == {4});
+			}}
+		}}
+	}}
+	catch (SqlException ex)
+	{{
+		Console.WriteLine(BuildExeptionSQL(ex));
+	}}
+	catch (Exception ex)
+	{{
+		Console.WriteLine(ex.Message);
+	}}
+}}</value>
+  </data>
+  <data name="AssertStoredProcedure" xml:space="preserve">
+    <value>[TestMethod]
+public void StoredProcedure_{0}()
+{{
+	try
+	{{
+		using (SqlConnection con = new SqlConnection(connString))
+		{{
+			using (SqlCommand cmd = new SqlCommand("{1}", con))
+			{{
+				cmd.CommandType = CommandType.StoredProcedure;
+
+				// add parameters (if needed)
+				{2}
+
+				SqlDataAdapter da = new SqlDataAdapter();
+				da.SelectCommand = cmd;
+
+				DataSet ds = new DataSet();
+				da.Fill(ds, "data");
+
+				Assert.IsTrue(ds.Tables.Count == 1);
+				Assert.IsTrue(ds.Tables[0].Rows.Count &gt;= 0);
+			}}
+		}}
+	}}
+	catch (SqlException ex)
+	{{
+		Console.WriteLine(BuildExeptionSQL(ex));
+	}}
+	catch (Exception ex)
+	{{
+		Console.WriteLine(ex.Message);
+	}}
+}}</value>
+  </data>
+  <data name="AssertStoredProcedureMultipleReturns" xml:space="preserve">
+    <value>[TestMethod]
+public void StoredProcedureWithOutputs_{0}()
+{{
+	try
+	{{
+		using (SqlConnection con = new SqlConnection(connString))
+		{{
+			string sql = @"{1}";
+			
+			using (SqlCommand cmd = new SqlCommand(sql, con))
+			{{
+				cmd.CommandType = CommandType.Text;
+
+				SqlDataAdapter da = new SqlDataAdapter();
+				da.SelectCommand = cmd;
+
+				DataSet ds = new DataSet();
+				da.Fill(ds, "Data");
+
+                       /*
+                        NB: Create an assertion for each output parameter, and if there is a dataset returned also!
+                        */
+
+/*extend unit tests to match your return scenarios*/				Assert.IsTrue(ds.Tables.Count &gt;= 1);
+				Assert.IsTrue(ds.Tables[0].Rows.Count &gt;= 1);
+			}}
+		}}
+	}}
+	catch (SqlException ex)
+	{{
+		Console.WriteLine(BuildExeptionSQL(ex));
+	}}
+	catch (Exception ex)
+	{{
+		Console.WriteLine(ex.Message);
+	}}
+}}</value>
+  </data>
+  <data name="AssertView" xml:space="preserve">
+    <value>[TestMethod]
+public void View{0}()
+{{
+	try
+	{{
+		using (SqlConnection con = new SqlConnection(connString))
+		{{
+			if (con != null &amp;&amp; con.State == ConnectionState.Closed) con.Open();
+
+			using (SqlCommand cmd = new SqlCommand("SELECT TOP 10 * FROM {0}", con))
+			{{
+				cmd.CommandType = CommandType.Text;
+
+				SqlDataAdapter da = new SqlDataAdapter();
+				da.SelectCommand = cmd;
+
+				DataSet ds = new DataSet();
+				da.Fill(ds, "vwClaimToRegion");
+
+				Assert.IsTrue(ds.Tables.Count == 1);
+				Assert.IsTrue(ds.Tables[0].Rows.Count &lt;= 10);
+			}}
+		}}
+	}}
+	catch (SqlException ex)
+	{{
+		Console.WriteLine(BuildExeptionSQL(ex));
+	}}
+	catch (Exception ex)
+	{{
+		Console.WriteLine(ex.Message);
+	}}
+}}</value>
+  </data>
+  <data name="ClassInit" xml:space="preserve">
+    <value>
+try
+{{
+	errorMessages = new StringBuilder();
+	testContext = context;
+
+	using (SqlConnection con = new SqlConnection(connString))
+	{{
+		if (con != null &amp;&amp; con.State == ConnectionState.Closed) con.Open();
+
+		// load project script from propertires file
+
+		using (SqlCommand cmd = new SqlCommand("{0}", con))
+		{{
+			cmd.CommandType = CommandType.Text;
+			cmd.ExecuteNonQuery();
+		}}
+	}}
+}}
+catch (SqlException ex)
+{{
+	Console.WriteLine(BuildExeptionSQL(ex));
+}}
+catch (Exception ex)
+{{
+	Console.WriteLine(ex.Message);
+}}
+</value>
+  </data>
+  <data name="ClassUtilityMethods" xml:space="preserve">
+    <value>
+#region Private Utility Methods
+        private static string BuildExeptionSQL(SqlException ex)
+        {
+            for (int loop = 0; loop &lt; ex.Errors.Count; loop++)
+            {
+                errorMessages.Append("Index #" + loop + "\n" +
+                    "Message: " + ex.Errors[loop].Message + "\n" +
+                    "LineNumber: " + ex.Errors[loop].LineNumber + "\n" +
+                    "Source: " + ex.Errors[loop].Source + "\n" +
+                    "Procedure: " + ex.Errors[loop].Procedure + "\n");
+            }
+            return errorMessages.ToString();
+        }
+        #endregion
+</value>
+  </data>
+  <data name="CleanUpFunction" xml:space="preserve">
+    <value>
+[ClassCleanup()]
+public static void ClassCleanup()
+{
+	// developer apply specific code clean up
+}
+</value>
+  </data>
+  <data name="EndingClassBrackets" xml:space="preserve">
+    <value>
+    }
+}</value>
+  </data>
+  <data name="Initialise_CleanupFnx" xml:space="preserve">
+    <value>#region Initialise &amp; Cleanup Methods
+	[ClassInitialize()]
+	public static void ClassInit(TestContext context)
+	{{
+		{0}
+	}}
+
+	[TestInitialize()]
+	public void Initialize()
+	{{
+		{1}
+	}}
+	
+	[ClassCleanup()]
+	public static void ClassCleanup()
+	{{
+		{2}
+	}}
+
+	[TestCleanup]
+	public void Cleanup()
+	{{
+		{3}
+	}}
+#endregion</value>
+  </data>
+  <data name="Initialize" xml:space="preserve">
+    <value>
+try
+            {
+                // run script before each test (back box testing)
+
+                using (SqlConnection con = new SqlConnection(connString))
+                {
+                    if (con != null &amp;&amp; con.State == ConnectionState.Closed) con.Open();
+
+                    // load test script from propertires file
+
+                    using (SqlCommand cmd = new SqlCommand("{1}", con))
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine(BuildExeptionSQL(ex));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+</value>
+  </data>
+  <data name="PrivateVariables" xml:space="preserve">
+    <value>
+#region Private Variables
+        private static string connString = "{0}";
+        public TestContext TestContext {{ get; set; }}
+        private static StringBuilder errorMessages = null;
+        private static TestContext testContext;
+#endregion
+</value>
+  </data>
+  <data name="UsingAndNamespace" xml:space="preserve">
+    <value>using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Text;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace YourUnitTestProjectName
+{
+    [TestClass]
+    public class YourUnitClassName
+    {
+		</value>
+  </data>
+</root>

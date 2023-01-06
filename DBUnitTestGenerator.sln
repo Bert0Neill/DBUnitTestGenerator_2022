@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29905.134
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBUnitTestGeneratorExt", "DBUnitTestGeneratorExt\DBUnitTestGeneratorExt.csproj", "{EAD82FBE-580E-43F0-B4CD-371803158BF5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSTestGeneratedCode", "MSTestGeneratedCode\MSTestGeneratedCode.csproj", "{474621AA-2450-4548-B400-2DF40EB4D37E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EAD82FBE-580E-43F0-B4CD-371803158BF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAD82FBE-580E-43F0-B4CD-371803158BF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAD82FBE-580E-43F0-B4CD-371803158BF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAD82FBE-580E-43F0-B4CD-371803158BF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{474621AA-2450-4548-B400-2DF40EB4D37E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{474621AA-2450-4548-B400-2DF40EB4D37E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{474621AA-2450-4548-B400-2DF40EB4D37E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{474621AA-2450-4548-B400-2DF40EB4D37E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B22FBFA5-DE33-4E1B-B578-F71B36C1FD25}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://tfs.uhc.com:8080/tfs/uhg
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = DBUnitTestGeneratorExt\\DBUnitTestGeneratorExt.csproj
+		SccProjectName1 = DBUnitTestGeneratorExt
+		SccLocalPath1 = DBUnitTestGeneratorExt
+		SccProjectUniqueName2 = MSTestGeneratedCode\\MSTestGeneratedCode.csproj
+		SccProjectName2 = MSTestGeneratedCode
+		SccLocalPath2 = MSTestGeneratedCode
+	EndGlobalSection
+EndGlobal
