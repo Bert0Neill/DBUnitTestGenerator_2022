@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="DBUnitTestGeneratorExt.a2f05c34-c236-4adf-a15c-0591ece88698" Version="1.0" Language="en-US" Publisher="Bert O'Neill" />
-    <DisplayName>Auto Generate MSTests</DisplayName>
+    <Identity Id="DBUnitTestGenExt-2002-a2f05c34-c236-4adf-a15c-0591ece88698" Version="1.0" Language="en-US" Publisher="Bert O'Neill" />
+    <DisplayName>Auto Generate MSTests - Visual Studio 2022</DisplayName>
     <Description xml:space="preserve">Auto generate (C#) MSTests for your SQL Server database.
 Create the scaffolding unit test code for each database object you select:
 1) Stored Procedures (inc. output parameters)
